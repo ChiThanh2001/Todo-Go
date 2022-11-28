@@ -46,7 +46,7 @@ service TodoMamagement {
 message Todo {
   string name = 1;
   int32 id = 2;
-  string Message = 3
+  string Message = 3;
 }
 
 

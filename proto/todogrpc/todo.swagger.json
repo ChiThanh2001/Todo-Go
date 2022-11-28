@@ -160,6 +160,9 @@
               "properties": {
                 "name": {
                   "type": "string"
+                },
+                "Message": {
+                  "type": "string"
                 }
               }
             }
@@ -224,6 +227,9 @@
         "id": {
           "type": "integer",
           "format": "int32"
+        },
+        "Message": {
+          "type": "string"
         }
       }
     },
