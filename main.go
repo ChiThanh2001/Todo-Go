@@ -37,7 +37,7 @@ func (s *server) CreateTodoItem(_ context.Context, req *todogrpc.CreateTodo) (*t
 		result := s.DB.Create(todo)
 
 		if result.Error != nil {
-			return nil, errors.New("Something went wrong")
+			return nil, result.Error
 		}
 
 		return &todogrpc.Todo{
@@ -54,7 +54,7 @@ func (s *server) GetTodoLists(context.Context, *emptypb.Empty) (*todogrpc.TodoLi
 	err := s.DB.Find(&todoList).Error
 
 	if err != nil {
-		return nil, errors.New("Something went wrong")
+		return nil, err
 	}
 	return &todogrpc.TodoList{
 		Todos: todoList,
@@ -64,10 +64,12 @@ func (s *server) GetTodoLists(context.Context, *emptypb.Empty) (*todogrpc.TodoLi
 func (s *server) GetTodoItemById(_ context.Context, Id *todogrpc.TodoId) (*todogrpc.Todo, error) {
 	var todo *todogrpc.Todo
 	result := s.DB.First(&todo, Id.Id)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, errors.New("Record not found")
+	}
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("Record not found")
-		}
+		return nil, result.Error
 	}
 	fmt.Println(*result)
 	return todo, nil
@@ -89,14 +91,13 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.New("Record not found")
 		}
-		return nil, errors.New("other error")
+		return nil, err
 	}
 
 	if req.Name != "" {
 		todo.Name = req.Name
 	}
 
-	fmt.Println(1)
 	s.DB.Save(&todo)
 	fmt.Println(&todo)
 	return todo, nil
