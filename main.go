@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -53,17 +55,43 @@ func (s *server) GetTodoLists(context.Context, *emptypb.Empty) (*todogrpc.TodoLi
 
 func (s *server) GetTodoItemById(_ context.Context, Id *todogrpc.TodoId) (*todogrpc.Todo, error) {
 	var todo *todogrpc.Todo
-	s.DB.Find(&todo, Id.Id)
+	result := s.DB.Find(&todo, Id.Id)
+	if result.RowsAffected == 0 {
+		return nil, errors.New("Item does not exist")
+	}
+	fmt.Println(*result)
 	return todo, nil
 }
 
 func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrpc.Todo, error) {
 	var todo *todogrpc.Todo
-	s.DB.Find(&todo, req.Id)
+	// s.DB.Find(&todo, req.Id)
+
+	fmt.Println(todo)
+	err := s.DB.
+		Where("id = ?", req.Id).
+		First(&todo).
+		Error
+
+	fmt.Println("ạdsksad", todo)
+	// log.Fatal(err)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("Record not found")
+		}
+		return nil, errors.New("other error")
+	}
+
+	if req.Name == "" {
+		return nil, errors.New("Name must be fill")
+	}
 	if req.Name != "" {
 		todo.Name = req.Name
 	}
+
+	fmt.Println(1)
 	s.DB.Save(&todo)
+	fmt.Println(&todo)
 	return todo, nil
 }
 
