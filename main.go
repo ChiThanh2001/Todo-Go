@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -71,7 +70,6 @@ func (s *server) GetTodoItemById(_ context.Context, Id *todogrpc.TodoId) (*todog
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	fmt.Println(*result)
 	return todo, nil
 }
 
@@ -87,11 +85,8 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 		First(&todo).
 		Error
 
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New("Record not found")
-		}
-		return nil, err
+	if err != nil && err == gorm.ErrRecordNotFound {
+		return nil, errors.New("Record not found")
 	}
 
 	if req.Name != "" {
@@ -99,7 +94,6 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 	}
 
 	s.DB.Save(&todo)
-	fmt.Println(&todo)
 	return todo, nil
 }
 
