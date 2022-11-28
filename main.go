@@ -146,7 +146,10 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Todo{})
+	err = db.AutoMigrate(&Todo{})
+	if err != nil {
+		log.Fatalln("Failed to automigrate:", err)
+	}
 
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", ":8080")
