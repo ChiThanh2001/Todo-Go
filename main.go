@@ -81,9 +81,8 @@ func (s *server) GetTodoItemById(_ context.Context, Id *todogrpc.TodoId) (*todog
 		return nil, result.Error
 	}
 	return &todogrpc.Todo{
-		Name:    todo.Name,
-		Id:      int32(todo.ID),
-		Message: "",
+		Name: todo.Name,
+		Id:   int32(todo.ID),
 	}, nil
 }
 
@@ -105,15 +104,12 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 		return nil, result.Error
 	}
 
-	if req.Name != "" {
-		todo.Name = req.Name
-	}
+	todo.Name = req.Name
 
 	s.DB.Save(todo)
 	return &todogrpc.Todo{
-		Name:    todo.Name,
-		Id:      int32(todo.ID),
-		Message: "",
+		Name: todo.Name,
+		Id:   int32(todo.ID),
 	}, nil
 }
 
