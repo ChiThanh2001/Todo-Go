@@ -80,13 +80,15 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 		return nil, errors.New("Name must be fill")
 	}
 
-	err := s.DB.
+	result := s.DB.
 		Where("id = ?", req.Id).
-		First(&todo).
-		Error
+		First(&todo)
 
-	if err != nil && err == gorm.ErrRecordNotFound {
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, errors.New("Record not found")
+	}
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	if req.Name != "" {
