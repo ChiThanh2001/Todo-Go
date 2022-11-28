@@ -49,19 +49,29 @@ func (s *server) CreateTodoItem(_ context.Context, req *todogrpc.CreateTodo) (*t
 }
 
 func (s *server) GetTodoLists(context.Context, *emptypb.Empty) (*todogrpc.TodoList, error) {
-	var todoList []*todogrpc.Todo
-	err := s.DB.Find(todoList).Error
+	todoList := []Todo{}
+	err := s.DB.Find(&todoList).Error
 
 	if err != nil {
 		return nil, err
 	}
+
+	grpcTodo := make([]*todogrpc.Todo, len(todoList))
+
+	for i, todo := range todoList {
+		grpcTodo[i] = &todogrpc.Todo{
+			Name: todo.Name,
+			Id:   int32(todo.ID),
+		}
+	}
+
 	return &todogrpc.TodoList{
-		Todos: todoList,
+		Todos: grpcTodo,
 	}, nil
 }
 
 func (s *server) GetTodoItemById(_ context.Context, Id *todogrpc.TodoId) (*todogrpc.Todo, error) {
-	var todo todogrpc.Todo
+	todo := Todo{}
 	result := s.DB.First(&todo, Id.Id)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -70,11 +80,15 @@ func (s *server) GetTodoItemById(_ context.Context, Id *todogrpc.TodoId) (*todog
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &todo, nil
+	return &todogrpc.Todo{
+		Name:    todo.Name,
+		Id:      int32(todo.ID),
+		Message: "",
+	}, nil
 }
 
 func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrpc.Todo, error) {
-	var todo *todogrpc.Todo
+	todo := Todo{}
 
 	if req.Name == "" {
 		return nil, errors.New("Name must be fill")
@@ -82,7 +96,7 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 
 	result := s.DB.
 		Where("id = ?", req.Id).
-		First(todo)
+		First(&todo)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, errors.New("Record not found")
@@ -96,12 +110,16 @@ func (s *server) UpdateTodoItem(_ context.Context, req *todogrpc.Todo) (*todogrp
 	}
 
 	s.DB.Save(todo)
-	return todo, nil
+	return &todogrpc.Todo{
+		Name:    todo.Name,
+		Id:      int32(todo.ID),
+		Message: "",
+	}, nil
 }
 
 func (s *server) DeleteTodoItem(_ context.Context, Id *todogrpc.TodoId) (*todogrpc.ConfirmMessage, error) {
-	var todo *todogrpc.Todo
-	result := s.DB.Delete(todo, Id.Id)
+	todo := Todo{}
+	result := s.DB.Delete(&todo, Id.Id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
